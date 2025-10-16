@@ -18,7 +18,7 @@ import Help from "./pages/Help";
 import Landing from "./pages/Landing";
 import LiveQueue from "./pages/LiveQueue";
 import NotFound from "./pages/NotFound";
-import LoginStaff from "./pages/staffs/LoginStaff";
+// import LoginStaff from "./pages/staffs/LoginStaff";
 import DisplayQueue from "./pages/students/DisplayQueue";
 import GenerateQueue from "./pages/students/GenerateQueue";
 import Request from "./pages/students/Request";
@@ -30,6 +30,12 @@ import LayoutProfile from "./components/LayoutProfile";
 import Profile from "./pages/dashboard/Profile";
 import ReleaseWindow from "./pages/dashboard/ReleaseWindow";
 import Reset_Queue from "./pages/dashboard/Reset_Queue";
+import StaffLogin from './pages/staffs/login/StaffLogin';
+import ForgotPassword from "./pages/staffs/login/ForgotPassword";
+import ResetPassword from "./pages/staffs/login/ResetPassword";
+import VerifyOTP from "./pages/staffs/login/VerifyOtp";
+import SuccessReset from "./pages/staffs/login/SuccessReset";
+import LayoutLogin from "./components/LayoutLogin";
 
 function App() {
   const { isLoading, progress, loadingText } = useLoading();
@@ -45,13 +51,22 @@ function App() {
 
       <Routes>
         {/* Public Routes */}
+        <Route element = {<LayoutLogin/>}>
+          <Route path="/staff/login" element={<StaffLogin/>} />
+          <Route path="/staff/forgot-password" element={<ForgotPassword />} />
+          <Route path="/staff/verify-otp" element={<VerifyOTP />} />
+          <Route path="/staff/reset-password" element={<ResetPassword />} />
+          {/* //for render(testing) raning nas ubos, si successreset */}
+          <Route path= "/staff/success-reset" element = {<SuccessReset/>}></Route> 
+        </Route>
+       
+
         <Route element={<Layout />}>
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<AboutUs />} />
           <Route path="/help" element={<Help />} />
           <Route path="/faq" element={<FAQs />} />
           <Route path="/footer" element={<Contact />} />
-          <Route path="/staff/login" element={<LoginStaff />} />
           <Route path="/student/request" element={<Request />} />
           <Route path="/student/queue/generate" element={<GenerateQueue />} />
           <Route path="/student/queue/live" element={<LiveQueue />} />
@@ -62,7 +77,7 @@ function App() {
             element={<SearchQueueResult />}
           />
         </Route>
-
+      
         {/* Staff Protected Routes */}
         <Route
           path="/staff"
