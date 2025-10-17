@@ -1,52 +1,20 @@
-import { Role } from "@prisma/client";
-import express from "express";
+import { Role } from '@prisma/client';
+import express from 'express';
 import {
   assignServiceWindow,
-  checkAvailableWindow,
-  getMyWindowAssignment,
-  getServiceWindowDetails,
-  releaseServiceWindow,
-} from "../controllers/staff.controller.js";
-import {
-  authenticateToken,
-  authorizeRoles,
-} from "../middlewares/auth.middleware.js";
+  createQueueSession,
+  determineNextQueue,
+  getQueueList,
+  viewQueues
+} from '../controllers/staff.controller.js';
+import { authenticateToken, authorizeRoles } from '../middlewares/auth.middleware.js';
 
-const router = express.Router();
+const router = express.Router()
 
-router.post(
-  "/window/assign",
-  authenticateToken,
-  authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR),
-  assignServiceWindow
-);
+router.get('/queue/view' ,authenticateToken ,authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR),viewQueues)
 
-router.post(
-  "/window/check",
-  authenticateToken,
-  authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR),
-  checkAvailableWindow
-);
-
-router.post(
-  "/window/release",
-  authenticateToken,
-  authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR),
-  releaseServiceWindow
-);
-
-router.get(
-  "/window/get/own",
-  authenticateToken,
-  authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR),
-  getMyWindowAssignment
-);
-
-router.get(
-  "/window/get",
-  authenticateToken,
-  authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR),
-  getServiceWindowDetails
-);
-
+router.get('/queue/next-queue', authenticateToken, authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR),determineNextQueue)
+router.post('/queue/add-session',authenticateToken,authorizeRoles(Role.PERSONNEL),createQueueSession )
+router.get ('/queue/queues', getQueueList)
+router.put('/window/assign', authenticateToken, authorizeRoles(Role.PERSONNEL, Role.WORKING_SCHOLAR), assignServiceWindow)
 export default router;

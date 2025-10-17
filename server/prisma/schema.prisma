@@ -32,7 +32,6 @@ enum Status {
   COMPLETED
   STALLED
   SKIPPED
-  PARTIALLY_COMPLETE
 }
 
 enum ShiftTag {

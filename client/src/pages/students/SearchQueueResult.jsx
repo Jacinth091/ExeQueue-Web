@@ -1,6 +1,5 @@
-import { ArrowLeft, Camera, Clock } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Camera, Clock } from "lucide-react";
 
 export default function SearchQueueResult() {
   const [query, setQuery] = useState("");
@@ -109,11 +108,9 @@ export default function SearchQueueResult() {
 
       {/* Footer Button */}
       <div className="w-full max-w-md flex justify-end">
-        <Link to="/" className="mt-10 mr-4">
-          <button className="mt-10   bg-blue-600 hover:bg-blue-700 text-white   text-sm font-medium px-4 py-4 rounded-xl flex items-center gap-2">
-            <ArrowLeft size={17} /> Back to Homepage
-          </button>
-        </Link>
+        <button className="mt-10   bg-blue-600 hover:bg-blue-700 text-white   text-sm font-medium px-4 py-4 rounded-xl flex items-center gap-2">
+          <ArrowLeft size={17} /> Back to Homepage
+        </button>
       </div>
     </div>
   );

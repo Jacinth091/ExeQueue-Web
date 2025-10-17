@@ -3,6 +3,10 @@ import { getRequestTypes } from '../controllers/request.controller.js';
 
 const router = express.Router();
 
-router.get('/request-type', getRequestTypes);
+
+router.get('/request-type', getRequestTypes)
+
 
 export default router;
+
+
