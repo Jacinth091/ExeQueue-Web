@@ -1078,6 +1078,14 @@ import { formatQueueNumber } from '../services/queue/QueueNumber.js';
 
 export const generateQueue = async (req, res) => {
   try {
+    const toTitleCase = (str) => {
+      if (!str) return str;
+      return str
+        .toLowerCase()
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
     const io = req.app.get('io');
     const {
       fullName,
@@ -1088,6 +1096,9 @@ export const generateQueue = async (req, res) => {
       queueType,
       serviceRequests,
     } = req.body;
+
+    // ✅ Capitalize full name to Title Case
+    const capitalizedFullName = toTitleCase(fullName);
 
     console.log('🟢 Incoming Queue Data:', req.body);
 
@@ -1264,7 +1275,7 @@ export const generateQueue = async (req, res) => {
           data: {
             sessionId: session.sessionId,
             studentId,
-            studentFullName: fullName,
+            studentFullName: capitalizedFullName,
             courseCode: course.courseCode,
             courseName: course.courseName,
             yearLevel: normalizedYearLevel,
