@@ -1878,6 +1878,7 @@ export const searchQueue = async (req, res) => {
 
     let queues;
 
+    // Search by referenceNumber (returns single queue - no changes)
     if (referenceNumber) {
       const queue = await prisma.queue.findUnique({
         where: {
@@ -1905,12 +1906,15 @@ export const searchQueue = async (req, res) => {
 
       queues = [queue];
     }
-    // Search by studentId (returns multiple queues)
+    // ✅ Search by studentId (returns only most recent ACTIVE queue)
     else if (studentId) {
-      queues = await prisma.queue.findMany({
+      const activeQueue = await prisma.queue.findFirst({
         where: {
           studentId,
           isActive: true,
+          queueStatus: {
+            notIn: [Status.COMPLETED, Status.CANCELLED], // ✅ Exclude completed/cancelled
+          },
         },
         include: {
           session: true,
@@ -1923,16 +1927,18 @@ export const searchQueue = async (req, res) => {
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: 'desc', // ✅ Most recent first
         },
       });
 
-      if (queues.length === 0) {
+      if (!activeQueue) {
         return res.status(404).json({
           success: false,
-          message: 'No queues found for this student ID',
+          message: 'No active queue found for this student ID',
         });
       }
+
+      queues = [activeQueue]; // ✅ Return only the most recent active queue
     }
 
     return res.status(200).json({

@@ -125,19 +125,59 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import DateAndTimeFormatter, {
   FORMATS,
 } from '../../../../server/utils/DateAndTimeFormatter';
+import { searchQueue } from '../../api/student';
 
 export default function SearchQueueResult() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { queues, searchType, searchValue } = location.state || {};
+  const {
+    queues: initialQueues,
+    searchType,
+    searchValue,
+  } = location.state || {};
   const [selectedQueueIndex, setSelectedQueueIndex] = useState(0);
+  const [queues, setQueues] = useState(initialQueues);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Redirect back if no data
   useEffect(() => {
     if (!queues || queues.length === 0) {
       navigate('/student/queue/search');
     }
   }, [queues, navigate]);
+
+  const handleSearch = async () => {
+    if (!query || query.trim() === '') {
+      return;
+    }
+
+    console.log('🔍 Starting search from results page...');
+    setLoading(true);
+
+    try {
+      const isReferenceNumber = query.includes('-');
+
+      const searchParams = isReferenceNumber
+        ? { referenceNumber: query.trim() }
+        : { studentId: query.trim() };
+
+      const result = await searchQueue(searchParams);
+
+      console.log('✅ Search result received:', result);
+
+      // Update queues with new search results
+      setQueues(result.data);
+      setSelectedQueueIndex(0); // Reset to first queue
+      setQuery(''); // Clear search input
+    } catch (err) {
+      console.error('❌ Search error:', err);
+      alert(
+        'Queue not found. Please check your Student ID or Reference Number.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!queues || queues.length === 0) {
     return null;
@@ -145,7 +185,6 @@ export default function SearchQueueResult() {
 
   const currentQueue = queues[selectedQueueIndex];
 
-  // Format queue number with prefix
   const formatQueueNumber = (queueNumber, queueType) => {
     const prefix = queueType === 'PRIORITY' ? 'P' : 'R';
     return `${prefix}${String(queueNumber).padStart(3, '0')}`;
@@ -175,15 +214,47 @@ export default function SearchQueueResult() {
 
   return (
     <div className="min-h-[90vh] w-full flex justify-center items-center flex-col px-4 py-6">
+      {/* Search Bar */}
+      <div className="flex w-full max-w-md rounded-full overflow-hidden border border-blue-600 bg-white focus-within:ring-2 focus-within:ring-blue-400 mb-20">
+        {/* ✅ Changed to mb-20 for much more space */}
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search another queue"
+          className="flex-1 px-4 py-3 outline-none text-sm sm:text-base font-normal bg-white placeholder-gray-500"
+          disabled={loading}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              handleSearch();
+            }
+          }}
+        />
+
+        <button
+          onClick={handleSearch}
+          disabled={loading}
+          className="w-18 h-md bg-blue-600 flex items-center justify-center hover:bg-gray-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <img
+              src="/assets/Search icon.png"
+              alt="search"
+              className="w-5 h-5"
+            />
+          )}
+        </button>
+      </div>
+
       {/* Multiple Queue Navigation */}
       {queues.length > 1 && (
         <div className="w-full max-w-md mb-6 bg-white rounded-xl shadow-md p-4">
           <p className="text-sm text-gray-600 mb-3 text-center">
             Found{' '}
             <span className="font-semibold text-blue-600">{queues.length}</span>{' '}
-            queue(s) for{' '}
-            {searchType === 'studentId' ? 'Student ID' : 'Reference Number'}:{' '}
-            <span className="font-semibold">{searchValue}</span>
+            queue(s)
           </p>
           <div className="flex gap-2 overflow-x-auto pb-2">
             {queues.map((queue, index) => (
@@ -326,8 +397,10 @@ export default function SearchQueueResult() {
 
       {/* Footer Button */}
       <div className="w-full max-w-md flex justify-end">
-        <Link to="/" className="mt-10 mr-4">
-          <button className="mt-10 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-4 rounded-xl flex items-center gap-2">
+        <Link to="/" className="mt-6 mr-4">
+          {/* ✅ Adjust this value: mt-4 (closest), mt-6 (close), mt-8 (medium), mt-10 (original) */}
+          <button className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-4 rounded-xl flex items-center gap-2">
+            {/* ✅ Removed duplicate mt-10 */}
             <ArrowLeft size={17} /> Back to Homepage
           </button>
         </Link>
