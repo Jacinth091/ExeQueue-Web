@@ -36,6 +36,44 @@ export default function Request() {
   const [errors, setErrors] = useState({});
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showBackConfirmModal, setShowBackConfirmModal] = useState(false);
+  const [showRequiredError, setShowRequiredError] = useState(false);
+
+  // Validation function for names
+  const validateName = (name) => {
+    if (!name.trim()) {
+      return ''; // No error if empty (let required validation handle it)
+    }
+
+    // Check for numbers
+    if (/\d/.test(name)) {
+      return 'Name cannot contain numbers';
+    }
+
+    // Check for special characters (allow only letters, spaces, and ñ/Ñ)
+    if (!/^[a-zA-ZñÑ\s]+$/.test(name)) {
+      return 'Name cannot contain special characters';
+    }
+
+    return ''; // No error
+  };
+
+  const validateStudentId = (id) => {
+    if (!id.trim()) {
+      return ''; // No error if empty
+    }
+
+    // Check for letters
+    if (/[a-zA-Z]/.test(id)) {
+      return 'Student ID cannot contain letters';
+    }
+
+    // Check if not 8 digits
+    if (!/^\d{8}$/.test(id)) {
+      return 'Student ID must be exactly 8 digits';
+    }
+
+    return '';
+  };
 
   const iconRules = [
     { keywords: ['certificate'], icon: 'fa-solid fa-file' },
@@ -218,24 +256,36 @@ export default function Request() {
 
   const validateStep2 = () => {
     const newErrors = {};
+
+    // Check required fields
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.firstName.trim())
       newErrors.firstName = 'First name is required';
-    if (!formData.studentId.trim()) {
+    if (!formData.studentId.trim())
       newErrors.studentId = 'Student ID is required';
-    } else if (!/^\d{8}$/.test(formData.studentId)) {
-      newErrors.studentId = 'Student ID must be exactly 8 digits';
-    }
-    if (!formData.courseId.trim()) newErrors.course = 'Course is required';
-    if (!formData.yearLevel.trim())
-      newErrors.yearLevel = 'Year level is required';
+    if (!formData.courseId) newErrors.course = 'Course is required';
+    if (!formData.yearLevel) newErrors.yearLevel = 'Year level is required';
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+    // ✅ Check if there are any validation errors (numbers/special chars in names, letters in studentId)
+    if (
+      errors.firstName ||
+      errors.lastName ||
+      errors.middleName ||
+      errors.studentId
+    ) {
+      setErrors({ ...errors, ...newErrors });
       return false;
     }
 
-    setErrors({});
+    setErrors(newErrors);
+
+    // Show required error if fields are missing
+    if (Object.keys(newErrors).length > 0) {
+      setShowRequiredError(true);
+      return false;
+    }
+
+    setShowRequiredError(false);
     return true;
   };
 
@@ -313,19 +363,35 @@ export default function Request() {
   //   }
   // };
   const handleChange = (e) => {
-    let value = e.target.value;
+    const { name, value } = e.target;
 
-    // Apply special formatting for student ID - only allow numbers and limit to 8 digits
-    if (e.target.name === 'studentId') {
-      value = value.replace(/\D/g, ''); // Remove non-digit characters
-      value = value.slice(0, 8); // Limit to 8 characters
+    // Update form data
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+
+    // Clear required error when user types
+    if (showRequiredError) {
+      setShowRequiredError(false);
     }
 
-    setFormData({ ...formData, [e.target.name]: value });
+    // Validate name fields
+    if (name === 'firstName' || name === 'lastName' || name === 'middleName') {
+      const error = validateName(value);
+      setErrors({
+        ...errors,
+        [name]: error,
+      });
+    }
 
-    // Clear error when user starts typing
-    if (errors[e.target.name]) {
-      setErrors((prev) => ({ ...prev, [e.target.name]: '' }));
+    // ✅ Validate Student ID
+    if (name === 'studentId') {
+      const error = validateStudentId(value);
+      setErrors({
+        ...errors,
+        [name]: error,
+      });
     }
   };
 
@@ -383,7 +449,7 @@ export default function Request() {
         }`.trim(),
         studentId: formData.studentId,
         courseId: formData.courseId,
-        courseCode: selectedCourse.courseCode, 
+        courseCode: selectedCourse.courseCode,
         yearLevel: formData.yearLevel.replace(' Year', ''),
         queueType: selectedQueue,
         serviceRequests: selectedServices.map((service) => ({
@@ -653,6 +719,12 @@ export default function Request() {
               </div>
             ))}
           </div>
+          {/* ✅ Required Fields Error - Shows below progress bar */}
+          {currentStep === 2 && showRequiredError && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm mx-15 mt-9 text-left">
+              Required fields must be filled in.
+            </div>
+          )}
         </div>
 
         {/* Step 1: Queue Options */}
@@ -771,12 +843,6 @@ export default function Request() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {Object.keys(errors).length > 0 && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                Please fill out all required fields
-              </div>
-            )}
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -797,7 +863,7 @@ export default function Request() {
                   }`}
                 />
                 {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+                  <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
                 )}
               </motion.div>
               <motion.div
@@ -838,7 +904,7 @@ export default function Request() {
                 }`}
               />
               {errors.firstName && (
-                <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+                <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
               )}
             </motion.div>
 
@@ -869,13 +935,16 @@ export default function Request() {
                 value={formData.studentId}
                 onChange={handleChange}
                 placeholder="e.g., 23772391"
-                pattern="[0-9]{8}"
                 inputMode="numeric"
                 maxLength="8"
                 className={`mt-1 w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none ${
                   errors.studentId ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
+              {/* ✅ Add error message display */}
+              {errors.studentId && (
+                <p className="text-red-500 text-xs mt-1">{errors.studentId}</p>
+              )}
             </motion.div>
 
             <motion.div

@@ -1078,6 +1078,14 @@ import { formatQueueNumber } from '../services/queue/QueueNumber.js';
 
 export const generateQueue = async (req, res) => {
   try {
+    const toTitleCase = (str) => {
+      if (!str) return str;
+      return str
+        .toLowerCase()
+        .split(' ')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
     const io = req.app.get('io');
     const {
       fullName,
@@ -1088,6 +1096,9 @@ export const generateQueue = async (req, res) => {
       queueType,
       serviceRequests,
     } = req.body;
+
+    // ✅ Capitalize full name to Title Case
+    const capitalizedFullName = toTitleCase(fullName);
 
     console.log('🟢 Incoming Queue Data:', req.body);
 
@@ -1264,7 +1275,7 @@ export const generateQueue = async (req, res) => {
           data: {
             sessionId: session.sessionId,
             studentId,
-            studentFullName: fullName,
+            studentFullName: capitalizedFullName,
             courseCode: course.courseCode,
             courseName: course.courseName,
             yearLevel: normalizedYearLevel,
@@ -1867,6 +1878,7 @@ export const searchQueue = async (req, res) => {
 
     let queues;
 
+    // Search by referenceNumber (returns single queue - no changes)
     if (referenceNumber) {
       const queue = await prisma.queue.findUnique({
         where: {
@@ -1894,12 +1906,15 @@ export const searchQueue = async (req, res) => {
 
       queues = [queue];
     }
-    // Search by studentId (returns multiple queues)
+    // ✅ Search by studentId (returns only most recent ACTIVE queue)
     else if (studentId) {
-      queues = await prisma.queue.findMany({
+      const activeQueue = await prisma.queue.findFirst({
         where: {
           studentId,
           isActive: true,
+          queueStatus: {
+            notIn: [Status.COMPLETED, Status.CANCELLED], // ✅ Exclude completed/cancelled
+          },
         },
         include: {
           session: true,
@@ -1912,16 +1927,18 @@ export const searchQueue = async (req, res) => {
           },
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: 'desc', // ✅ Most recent first
         },
       });
 
-      if (queues.length === 0) {
+      if (!activeQueue) {
         return res.status(404).json({
           success: false,
-          message: 'No queues found for this student ID',
+          message: 'No active queue found for this student ID',
         });
       }
+
+      queues = [activeQueue]; // ✅ Return only the most recent active queue
     }
 
     return res.status(200).json({
