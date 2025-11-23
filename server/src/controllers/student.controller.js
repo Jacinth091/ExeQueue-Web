@@ -105,24 +105,18 @@ export const generateQueue = async (req, res) => {
         });
 
         console.log(
-          `✅ Queue generated: ${formatQueueNumber(
+          `Queue generated: ${formatQueueNumber(
             QUEUETYPE === Queue_Type.PRIORITY ? "P" : "R",
             queueNumber
           )} (Seq: ${currentCount}, Session: ${
             session.sessionNumber
           }, Iteration: ${resetIteration})`
         );
-
-        // Increment session count
         await tx.queueSession.update({
           where: { sessionId: session.sessionId },
           data: { currentQueueCount: { increment: 1 } },
         });
-
-        // Create service requests
         await createServiceRequests(tx, newQueue.queueId, serviceRequests);
-
-        // Return data for post-transaction operations
         return {
           newQueue,
           session,
@@ -427,7 +421,6 @@ class ValidationError extends Error {
     this.name = "ValidationError";
   }
 }
-
 
 export const getQueue = async (req, res) => {
   try {
@@ -929,8 +922,8 @@ export const getQueueDisplay = async (req, res) => {
         queueId: true,
         studentId: true,
         studentFullName: true,
-        courseCode: true,
-        yearLevel: true,
+        // courseCode: true,
+        // yearLevel: true,
         queueNumber: true,
         queueType: true,
         queueStatus: true,
